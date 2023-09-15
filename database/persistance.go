@@ -35,6 +35,10 @@ func toFile(id int) error {
 	return nil
 }
 
+func (c *Connection) toFile() error {
+	return toFile(c.id)
+}
+
 func LoadDB(name string, storageType interface{}) (*Connection, error) {
 	file, err := os.Open(name)
 	if err != nil {

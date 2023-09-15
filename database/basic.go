@@ -52,9 +52,7 @@ func New(name string, storagetype interface{}, writes int64, time int64) (*Conne
 	storList[name] = len(storages) - 1
 	mainLock.Unlock()
 
-	c := &Connection{len(storages) - 1, name}
-
-	return c, nil
+	return &Connection{len(storages) - 1, name}, nil
 }
 
 func (c *Connection) Get(key string) interface{} {

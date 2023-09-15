@@ -39,7 +39,7 @@ func (c *Connection) PartialMatch(field, value string, reverse bool) (keys []str
 		return
 	}
 
-	for _, v := range storages[c.id].searchArrays[search.Pointer] {
+	for _, v := range storages[c.id].searchArrays[search.Pointer] { //Why only string, moron?
 		if reverse {
 			if strings.Contains(value, v.Value.(string)) {
 				keys = append(keys, v.Capsule)
