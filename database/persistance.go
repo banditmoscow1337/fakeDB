@@ -35,7 +35,7 @@ func toFile(id int) error {
 	return nil
 }
 
-func (c *Connection) toFile() error {
+func (c *Connection) Snapshot() error {
 	return toFile(c.id)
 }
 
