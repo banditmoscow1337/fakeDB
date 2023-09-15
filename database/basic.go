@@ -29,9 +29,10 @@ func checkSnapshots() {
 	}
 }
 
-func New(name string, storagetype interface{}, writes int64, time int64) (*Connection, error) {
+func New(name string, storagetype string, writes int64, time int64) (c Connection, err error) {
 	if _, ok := storList[name]; ok {
-		return nil, errors.New(name + " storage already exists")
+		err = errors.New(name + " storage already exists")
+		return
 	}
 
 	s := Storage{
@@ -50,19 +51,39 @@ func New(name string, storagetype interface{}, writes int64, time int64) (*Conne
 	storLock = append(storLock, sync.Mutex{})
 
 	storList[name] = len(storages) - 1
+
+	c = Connection{len(storages) - 1, name}
 	mainLock.Unlock()
 
-	return &Connection{len(storages) - 1, name}, nil
+	return
 }
 
-func (c *Connection) Get(key string) interface{} {
+func (c Connection) Get(key string) interface{} {
 	if cp, ok := storages[c.id].DB[key]; ok {
+		switch cp.Data.(type) { //bad fix after json bullshittery
+		case float64:
+			switch storages[c.id].StorageType {
+			case "int":
+				return int(cp.Data.(float64))
+				break
+			case "int16":
+				return int16(cp.Data.(float64))
+				break
+			case "int32":
+				return int32(cp.Data.(float64))
+				break
+			case "int64":
+				return int64(cp.Data.(float64))
+				break
+			}
+		}
+
 		return cp.Data
 	}
 	return nil
 }
 
-func (c *Connection) Set(key string, val interface{}) {
+func (c Connection) Set(key string, val interface{}) {
 	storLock[c.id].Lock()
 
 	capsule, ok := storages[c.id].DB[key]
@@ -78,23 +99,26 @@ func (c *Connection) Set(key string, val interface{}) {
 	storLock[c.id].Unlock()
 }
 
-func (c *Connection) Delete(key string) {
+func (c Connection) Delete(key string) {
 	storLock[c.id].Lock()
 	delete(storages[c.id].DB, key)
 	storLock[c.id].Unlock()
 }
 
-func (c *Connection) Reset() {
+func (c Connection) Reset() {
 	storLock[c.id].Lock()
 	storages[c.id].DB = make(map[string]Capsule)
 	storages[c.id].Persistent.lastSave = time.Now().Unix()
 	storLock[c.id].Unlock()
 }
 
-func Conn(name string) (*Connection, error) {
+func Conn(name string) (c Connection, err error) {
 	if id, ok := storList[name]; ok {
-		return &Connection{id, name}, nil
+		c = Connection{id, name}
+		return
 	}
 
-	return nil, errors.New(name + "storage not found")
+	err = errors.New(name + "storage not found")
+
+	return
 }

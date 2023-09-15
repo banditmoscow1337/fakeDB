@@ -1,15 +1,17 @@
 package database
 
 import (
+	"reflect"
 	"sync"
 )
 
 type Storage struct {
-	Name        string
-	DB          map[string]Capsule
-	StorageType interface{}
-	Persistent  Persistent
-	SearchMap   map[string]SearchMapper
+	Name         string
+	DB           map[string]Capsule
+	StorageType  string
+	strorageType reflect.Type
+	Persistent   Persistent
+	SearchMap    map[string]SearchMapper
 
 	searchArrays      [][]SearchBlock
 	searchWritesCount int64

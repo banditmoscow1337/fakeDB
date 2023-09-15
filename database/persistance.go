@@ -4,7 +4,7 @@ import (
 	"compress/gzip"
 	"io"
 	"os"
-	"strings"
+	"sync"
 	"time"
 
 	"github.com/goccy/go-json"
@@ -21,7 +21,7 @@ func toFile(id int) error {
 	storages[id].Persistent.lastSave = time.Now().Unix()
 	storages[id].Persistent.writeCount = 0
 
-	fi, err := os.OpenFile(storages[id].Name+".db", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0660)
+	fi, err := os.OpenFile(storages[id].Name+".db", os.O_WRONLY|os.O_CREATE, 0660)
 	if err != nil {
 		return err
 	}
@@ -35,44 +35,43 @@ func toFile(id int) error {
 	return nil
 }
 
-func (c *Connection) Snapshot() error {
+func (c Connection) Snapshot() error {
 	return toFile(c.id)
 }
 
-func LoadDB(name string, storageType interface{}) (*Connection, error) {
-	file, err := os.Open(name)
+func LoadDB(name string) (c Connection, err error) {
+	file, err := os.Open(name + ".db")
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	var s Storage
 
 	r, err := gzip.NewReader(file)
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	data, err := io.ReadAll(r)
 	if err != nil {
-		return nil, err
+		return
 	}
 	r.Close()
 
 	err = json.Unmarshal(data, &s)
 
 	if err != nil {
-		return nil, err
+		return
 	}
-
-	realname := name[:strings.Index(name, ".db")]
-	realname = realname[strings.LastIndex(realname, "/")+1:]
 
 	mainLock.Lock()
 	storages = append(storages, s)
-	storList[realname] = len(storages) - 1
+	storLock = append(storLock, sync.Mutex{})
+	storList[name] = len(storages) - 1
 
-	c := Connection{len(storages) - 1, realname}
+	c = Connection{len(storages) - 1, name}
+
 	mainLock.Unlock()
 
-	return &c, nil
+	return
 }

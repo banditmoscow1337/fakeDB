@@ -32,7 +32,7 @@ func parallelShit(tf func(i int)) {
 }
 
 func TestWriteString(t *testing.T) {
-	conn, err := New("amogus_str", "", 0, 0)
+	conn, err := New("amogus_str", "string", 0, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -70,7 +70,7 @@ type GeeGurda struct {
 }
 
 func TestWriteStruct(t *testing.T) {
-	conn, err := New("amogus_struct", GeeGurda{}, 0, 0)
+	conn, err := New("amogus_struct", "struct", 0, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -98,7 +98,7 @@ func TestWriteStruct(t *testing.T) {
 func TestNewDB(t *testing.T) {
 	start := time.Now()
 	parallelShit(func(i int) {
-		_, err := New(strconv.Itoa(i), GeeGurda{}, 0, 0)
+		_, err := New(strconv.Itoa(i), "struct", 0, 0)
 		if err != nil {
 			t.Fatal(err)
 		}

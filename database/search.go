@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func (c *Connection) ExactMatch(field string, value interface{}) (keys []string, err error) {
+func (c Connection) ExactMatch(field string, value interface{}) (keys []string, err error) {
 	search, ok := storages[c.id].SearchMap[field]
 	if !ok {
 		err = errors.New("search not exist")
@@ -27,7 +27,7 @@ func (c *Connection) ExactMatch(field string, value interface{}) (keys []string,
 	return
 }
 
-func (c *Connection) PartialMatch(field, value string, reverse bool) (keys []string, err error) {
+func (c Connection) PartialMatch(field, value string, reverse bool) (keys []string, err error) {
 	search, ok := storages[c.id].SearchMap[field]
 	if !ok {
 		err = errors.New("search not exist")
@@ -39,7 +39,7 @@ func (c *Connection) PartialMatch(field, value string, reverse bool) (keys []str
 		return
 	}
 
-	for _, v := range storages[c.id].searchArrays[search.Pointer] { //Why only string, moron?
+	for _, v := range storages[c.id].searchArrays[search.Pointer] {
 		if reverse {
 			if strings.Contains(value, v.Value.(string)) {
 				keys = append(keys, v.Capsule)
@@ -92,7 +92,7 @@ func makeSearch(id int, field string) (sa []SearchBlock, err error) {
 	return
 }
 
-func (c *Connection) MakeSearch(field string, recalc int64) (err error) {
+func (c Connection) MakeSearch(field string, recalc int64) (err error) {
 	if _, ok := storages[c.id].SearchMap[field]; ok {
 		err = errors.New("search exist")
 		return
@@ -130,5 +130,29 @@ func recalcSearches() {
 			}
 		}
 		time.Sleep(time.Second * 1)
+	}
+}
+
+func (c Connection) EveryElement(cb func(string, interface{})) {
+	for k, cp := range storages[c.id].DB {
+		v := cp.Data
+		switch cp.Data.(type) { //bad fix after json bullshittery
+		case float64:
+			switch storages[c.id].StorageType {
+			case "int":
+				v = int(cp.Data.(float64))
+				break
+			case "int16":
+				v = int16(cp.Data.(float64))
+				break
+			case "int32":
+				v = int32(cp.Data.(float64))
+				break
+			case "int64":
+				v = int64(cp.Data.(float64))
+				break
+			}
+		}
+		cb(k, v)
 	}
 }
